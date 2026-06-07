@@ -271,7 +271,15 @@ kubectl patch service frontend-service \
 -p '{"spec":{"selector":{"app":"frontend","version":"blue"}}}'
 ```
 
+# Cleanup
 
+Delete all resources:
+
+kubectl delete -f k8s/
+
+Stop Minikube:
+
+minikube stop
 
 
 ```
