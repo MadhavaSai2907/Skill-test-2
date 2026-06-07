@@ -1,183 +1,278 @@
 # Blue-Green Deployment Project
 
-## Prerequisites
-- Docker Desktop
-- Minikube
-- kubectl
-- Helm
-- Node.js
-- Git
+## Overview
 
-## Project Setup
+This project demonstrates the deployment of a containerized Node.js application using Docker and Kubernetes with a Blue-Green Deployment strategy.
 
-### 1. Clone the Repository
-```bash
-git clone <your-repository-url>
-cd blue-green-project
+The application consists of:
+
+* Backend Node.js/Express application
+* MongoDB database
+* Blue Frontend version
+* Green Frontend version
+* Kubernetes Services and Deployments
+* Blue-Green traffic switching using Kubernetes Service selectors
+
+---
+
+# Prerequisites
+
+* Docker
+* Kubernetes (Minikube)
+* kubectl
+* Node.js
+* Git
+
+---
+
+# Project Structure
+
+```text
+.
+├── backend
+├── frontend-blue
+├── frontend-green
+├── k8s
+│   ├── backend-deployment.yaml
+│   ├── frontend-blue-deployment.yaml
+│   ├── frontend-green-deployment.yaml
+│   ├── frontend-service.yaml
+│   └── ingress.yaml
+└── README.md
 ```
 
-### 2. Local Development
+---
 
-#### Backend Setup
-1. Navigate to backend directory
-2. Install dependencies
+# Local Deployment
+
+## Backend Setup
+
+Navigate to backend directory:
+
 ```bash
 cd backend
 npm install
 ```
-3. Create `.env` file with:
-```
+
+Create `.env` file:
+
+```env
 PORT=5000
-MONGO_URI=your-mongodb-connection-string
+MONGO_URI=mongodb://localhost:27017/mydb
 ```
-4. Start backend server
+
+Start backend:
+
 ```bash
 npm start
 ```
 
-#### Frontend Setup
-1. Setup Blue Frontend
+Verify:
+
+```bash
+curl http://localhost:5000/health
+```
+<img width="600" height="210" alt="Screenshot 2026-06-07 181448" src="https://github.com/user-attachments/assets/b35a7735-5f44-41c7-ac9a-60d67a3176d8" />
+
+---
+
+## Frontend Blue Setup
+
 ```bash
 cd frontend-blue
 npm install
-```
-2. Create `.env` file:
-```
-PORT=3100
-```
-3. Start blue frontend
-```bash
 npm start
 ```
 
-3. Repeat similar steps for Green Frontend (with PORT=3200)
+Access:
 
-### 3. Dockerization
-
-#### Build Docker Images
-```bash
-# Build Backend Image
-docker build -t your-username/backend:v1 ./backend
-
-# Build Blue Frontend Image
-docker build -t your-username/frontend-blue:v1 ./frontend-blue
-
-# Build Green Frontend Image
-docker build -t your-username/frontend-green:v1 ./frontend-green
+```text
+http://localhost:3100
 ```
 
-### 4. Kubernetes Deployment
+<img width="1777" height="877" alt="3100" src="https://github.com/user-attachments/assets/4c75934b-71cf-483b-b302-70533153338b" />
 
-#### Minikube Setup
-1. Start Minikube
+---
+
+## Frontend Green Setup
+
+```bash
+cd frontend-green
+npm install
+npm start
+```
+
+Access:
+
+```text
+http://localhost:3200
+```
+<img width="1752" height="952" alt="image" src="https://github.com/user-attachments/assets/8fac0283-b69f-4e7d-a5ea-822ae3b04e6a" />
+
+---
+
+# Dockerization
+
+## Build Backend Image
+
+```bash
+docker build -t madhavasai2907/backend:v1 ./backend
+```
+
+## Build Blue Frontend Image
+
+```bash
+docker build -t madhavasai2907/frontend-blue:v1 ./frontend-blue
+```
+
+## Build Green Frontend Image
+
+```bash
+docker build -t madhavasai2907/frontend-green:v1 ./frontend-green
+```
+
+---
+
+## Push Images to Docker Hub
+
+```bash
+docker push madhavasai2907/backend:v1
+
+docker push madhavasai2907/frontend-blue:v1
+
+docker push madhavasai2907/frontend-green:v1
+```
+<img width="820" height="342" alt="Screenshot 2026-06-07 180044" src="https://github.com/user-attachments/assets/1be17083-ca2f-4b7c-b167-27d2d1dce601" />
+
+<img width="1498" height="178" alt="image" src="https://github.com/user-attachments/assets/6c183cfc-0e72-4de5-9155-5eefa607dd97" />
+
+---
+
+# Kubernetes Deployment
+
+## Start Minikube
+
 ```bash
 minikube start
 ```
 
-2. Enable Required Addons
+Enable required addons:
+
 ```bash
-minikube addons enable metrics-server
 minikube addons enable ingress
+minikube addons enable metrics-server
 ```
 
-### 5. Create Kubernetes Manifest Files
+---
 
-#### Required Manifest Files
-Create following files in `k8s/` directory:
-- `backend-deployment.yaml`
-- `frontend-blue-deployment.yaml`
-- `frontend-green-deployment.yaml`
-- `frontend-service.yaml`
-- `ingress.yaml`
+## Deploy Application
 
-#### Service File Key Concepts
-Your `frontend-service.yaml` should:
-- Use selector to route traffic
-- Define version (blue/green)
-- Map ports correctly
+Apply all manifests:
 
-### 6. Deploy to Minikube
 ```bash
-# Apply all manifests
 kubectl apply -f k8s/
+```
 
-# Verify deployments
+Verify deployments:
+
+```bash
 kubectl get deployments
-kubectl get services
+```
+
+Verify pods:
+
+```bash
 kubectl get pods
 ```
 
-### 7. Blue-Green Switching
+Verify services:
 
-#### Switch Traffic Methods
-
-1. Basic Patch Command
 ```bash
-# Switch to Green
-kubectl patch service frontend-service -p '{"spec":{"selector":{"version":"green"}}}'
+kubectl get svc
+```
+<img width="820" height="342" alt="Screenshot 2026-06-07 180044" src="https://github.com/user-attachments/assets/e74d3183-4c6a-423c-aea9-3f27ee6e5bac" />
 
-# Switch back to Blue
-kubectl patch service frontend-service -p '{"spec":{"selector":{"version":"blue"}}}'
+---
+
+# Blue-Green Deployment Strategy
+
+The application uses two frontend deployments:
+
+## Blue Deployment
+
+```text
+app=frontend
+version=blue
+```
+<img width="842" height="326" alt="Screenshot 2026-06-07 180107" src="https://github.com/user-attachments/assets/d0a483f7-d9c2-45a3-a565-af1d627a17b5" />
+
+
+## Green Deployment
+
+```text
+app=frontend
+version=green
+```
+<img width="832" height="367" alt="Screenshot 2026-06-07 180122" src="https://github.com/user-attachments/assets/6781db8b-af2d-4f8c-a66b-c4f6d1dcf3af" />
+
+The Kubernetes Service routes traffic based on labels.
+
+Initial Service configuration:
+
+```yaml
+selector:
+  app: frontend
+  version: blue
 ```
 
-2. Detailed Patch Command
+Traffic flow:
+
+```text
+Users
+  |
+Frontend Service
+  |
+Blue Pods
+```
+
+---
+
+# Switching Traffic to Green
+
+Run:
+
 ```bash
-kubectl patch service frontend-service --type='merge' -p '{
-  "spec":{
-    "selector":{
-      "app":"frontend",
-      "version":"green"
-    }
-  }
-}'
+kubectl patch service frontend-service \
+-p '{"spec":{"selector":{"app":"frontend","version":"green"}}}'
 ```
 
-### 8. Verification
-- Check service endpoints
-- Verify traffic routing
-- Monitor application logs
+Verify:
 
-### Troubleshooting
-- `kubectl get pods` - Check pod status
-- `kubectl logs <pod-name>` - View logs
-- `kubectl describe service frontend-service` - Service details
-
-### Cleanup
 ```bash
-# Remove deployments
-kubectl delete -f k8s/
-
-# Stop Minikube
-minikube stop
+kubectl describe svc frontend-service
 ```
 
-## Blue-Green Deployment Flow Chart
+Traffic flow:
 
-```mermaid
-graph TD
-    A[Blue Environment Running] -->|Deploy Green| B[Green Environment Prepared]
-    B -->|Validate Green| C{Green Ready?}
-    C -->|Yes| D[Update Service Selector]
-    C -->|No| B
-    D -->|Redirect Traffic| E[Green Now Active]
-    E -->|Rollback Option| A
+```text
+Users
+  |
+Frontend Service
+  |
+Green Pods
 ```
 
-### Flow Explanation
-1. Blue environment is initial production
-2. Green environment deployed alongside
-3. Validate green environment 
-4. Update service selector
-5. Redirect traffic to green
-6. Blue remains as rollback option
+---
 
-## Best Practices
-- Implement health checks
-- Use resource limits
-- Configure monitoring
-- Validate before switching
-- Maintain rollback strategy
+# Switching Traffic Back to Blue
+
+```bash
+kubectl patch service frontend-service \
+-p '{"spec":{"selector":{"app":"frontend","version":"blue"}}}'
+```
 
 
-## License
-This project is licensed under the MIT License
+
+
+```
+```
